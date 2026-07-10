@@ -11,6 +11,7 @@ const path = require('path');
 const { logger } = require('../utils/logger');
 
 const dataDir = path.join(__dirname, '..', '..', 'data');
+
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
@@ -18,6 +19,15 @@ if (!fs.existsSync(dataDir)) {
 const dataFile = path.join(dataDir, 'cdtiers.json');
 
 const defaultData = {
+  // Runtime settings configured through slash commands
+  settings: {
+    queueChannelId: null,
+    resultsChannelId: null,
+    joinWaitlistChannelId: null,
+    testerIds: [],
+  },
+
+  // Queue state
   state: {
     is_open: false,
     active_tester_id: null,
@@ -28,28 +38,10 @@ const defaultData = {
     board_message_id: null,
     last_session_ended_at: null,
   },
+
+  // Queue members
   players: [],
 };
-
-function readFromDisk() {
-  if (!fs.existsSync(dataFile)) {
-    writeToDisk(defaultData);
-    return JSON.parse(JSON.stringify(defaultData));
-  }
-  try {
-    const raw = fs.readFileSync(dataFile, 'utf8');
-    const parsed = JSON.parse(raw);
-    // Guard against a partially-shaped file (e.g. from an older version).
-    return {
-      state: { ...defaultData.state, ...(parsed.state || {}) },
-      players: Array.isArray(parsed.players) ? parsed.players : [],
-    };
-  } catch (err) {
-    logger.error(`Failed to read data file, resetting to defaults: ${err.message}`);
-    writeToDisk(defaultData);
-    return JSON.parse(JSON.stringify(defaultData));
-  }
-}
 
 function writeToDisk(data) {
   const tmpFile = `${dataFile}.tmp`;
@@ -57,20 +49,56 @@ function writeToDisk(data) {
   fs.renameSync(tmpFile, dataFile);
 }
 
-// In-memory cache, kept in sync with disk on every mutation.
+function readFromDisk() {
+  if (!fs.existsSync(dataFile)) {
+    writeToDisk(defaultData);
+    return JSON.parse(JSON.stringify(defaultData));
+  }
+
+  try {
+    const raw = fs.readFileSync(dataFile, 'utf8');
+    const parsed = JSON.parse(raw);
+
+    return {
+      settings: {
+        ...defaultData.settings,
+        ...(parsed.settings || {}),
+      },
+
+      state: {
+        ...defaultData.state,
+        ...(parsed.state || {}),
+      },
+
+      players: Array.isArray(parsed.players)
+        ? parsed.players
+        : [],
+    };
+  } catch (err) {
+    logger.error(
+      `Failed to read data file, resetting to defaults: ${err.message}`
+    );
+
+    writeToDisk(defaultData);
+    return JSON.parse(JSON.stringify(defaultData));
+  }
+}
+
+// In-memory cache
 let cache = readFromDisk();
 
 logger.info(`Database ready at ${dataFile}`);
 
-/** Returns the live in-memory data object (state + players). Mutate it, then call setData. */
 function getData() {
   return cache;
 }
 
-/** Persists the given data object to disk and updates the in-memory cache. */
 function setData(data) {
   cache = data;
   writeToDisk(cache);
 }
 
-module.exports = { getData, setData };
+module.exports = {
+  getData,
+  setData,
+};
