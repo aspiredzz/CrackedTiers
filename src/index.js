@@ -20,19 +20,34 @@ const client = new Client({
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
   ],
-  partials: [Partials.Channel, Partials.Message],
+  partials: [
+    Partials.Channel,
+    Partials.Message,
+  ],
 });
 
-loadCommands(client);
-loadEvents(client);
+async function startBot() {
+  try {
+    // Load & register slash commands
+    await loadCommands(client);
 
-// Start the Express health server + self-pinger (independent of the Discord client).
-startServer();
+    // Load events
+    loadEvents(client);
 
-client.login(config.token).catch((err) => {
-  logger.error(`Failed to log in: ${err.message}`);
-  process.exit(1);
-});
+    // Start Express health server
+    startServer();
+
+    // Login to Discord
+    await client.login(config.token);
+
+    logger.info('Bot startup complete.');
+  } catch (err) {
+    logger.error(`Startup failed: ${err.stack || err}`);
+    process.exit(1);
+  }
+}
+
+startBot();
 
 process.on('unhandledRejection', (err) => {
   logger.error(`Unhandled promise rejection: ${err?.stack || err}`);
