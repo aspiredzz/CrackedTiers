@@ -8,6 +8,7 @@
 
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const config = require('../config/config');
+const runtimeConfig = require('./runtimeConfig');
 const queueManager = require('./queueManager');
 const { buildNoTesterEmbed } = require('../embeds/noTesterEmbed');
 const { buildQueueEmbed } = require('../embeds/queueEmbed');
@@ -29,13 +30,15 @@ function getQueueButtons(disableJoin = false) {
 }
 
 async function getQueueChannel(client) {
-  if (!config.queueChannelId) return null;
-  return client.channels.fetch(config.queueChannelId).catch(() => null);
+  const channelId = runtimeConfig.getQueueChannelId();
+  if (!channelId) return null;
+  return client.channels.fetch(channelId).catch(() => null);
 }
 
 async function getPrivateChannel(client) {
-  if (!config.privateQueueChannelId) return null;
-  return client.channels.fetch(config.privateQueueChannelId).catch(() => null);
+  const channelId = runtimeConfig.getPrivateQueueChannelId();
+  if (!channelId) return null;
+  return client.channels.fetch(channelId).catch(() => null);
 }
 
 /** Replaces the queue embed with the "No Testers Online" embed (no buttons). */
