@@ -1,5 +1,5 @@
 // ============================================================
-// CDTIERS Bot - Health Server & Self-Pinger
+// CDTIERS Bot - self pinger idk bro 
 // Runs a tiny Express server with a GET /health endpoint so
 // Railway (or any uptime monitor) can confirm the process is
 // alive. Also self-pings its own public URL periodically to
