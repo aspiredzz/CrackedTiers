@@ -7,6 +7,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const queueManager = require('../utils/queueManager');
 const queueDisplay = require('../utils/queueDisplay');
+const runtimeConfig = require('../utils/runtimeConfig');
 const { isStaff } = require('../utils/permissions');
 
 module.exports = {
@@ -18,6 +19,13 @@ module.exports = {
     if (!isStaff(interaction.member)) {
       return interaction.reply({
         content: '❌ You do not have permission to use this command.',
+        ephemeral: true,
+      });
+    }
+
+    if (!runtimeConfig.getQueueChannelId()) {
+      return interaction.reply({
+        content: '❌ No queue channel is set yet. Run `/setqueuechannel` first, then try again.',
         ephemeral: true,
       });
     }
