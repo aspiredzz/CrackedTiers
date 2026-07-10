@@ -1,21 +1,24 @@
 const { EmbedBuilder } = require('discord.js');
 const config = require('../config/config');
 
-function buildResultsEmbed(data) {
-  const {
-    username,
-    tester,
-    gamemode,
-    region,
-    previousRank,
-    tier,
-  } = data;
-
+function buildResultsEmbed({
+  username,
+  tier,
+  tester,
+  previousRank,
+  region,
+  gamemode,
+}) {
   return new EmbedBuilder()
-    .setColor(0xED4245)
+    .setColor(config.colors.success)
     .setTitle(`🏆 ${username}'s Test Results`)
     .setThumbnail(`https://mc-heads.net/avatar/${encodeURIComponent(username)}/128`)
     .addFields(
+      {
+        name: '👤 Username',
+        value: username,
+        inline: true,
+      },
       {
         name: '🧪 Tester',
         value: tester,
@@ -32,17 +35,12 @@ function buildResultsEmbed(data) {
         inline: true,
       },
       {
-        name: '👤 Username',
-        value: username,
-        inline: true,
-      },
-      {
         name: '📈 Previous Rank',
         value: previousRank,
         inline: true,
       },
       {
-        name: '🥇 Rank Earned',
+        name: '🏆 Rank Earned',
         value: tier,
         inline: true,
       }
