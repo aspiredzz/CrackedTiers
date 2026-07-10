@@ -2,73 +2,69 @@ const { SlashCommandBuilder } = require('discord.js');
 const runtimeConfig = require('../utils/runtimeConfig');
 const { buildResultsEmbed } = require('../embeds/resultsEmbed');
 const { isStaff } = require('../utils/permissions');
-const { logger } = require('../utils/logger');
+
+const TIERS = [
+  'HT1',
+  'LT1',
+  'HT2',
+  'LT2',
+  'HT3',
+  'LT3',
+  'HT4',
+  'LT4',
+  'HT5',
+  'LT5',
+  'Unranked'
+];
+
+const command = new SlashCommandBuilder()
+  .setName('results')
+  .setDescription('Submit a tier test result')
+  .addStringOption(option =>
+    option
+      .setName('username')
+      .setDescription('Minecraft Username')
+      .setRequired(true)
+  )
+  .addStringOption(option =>
+    option
+      .setName('region')
+      .setDescription('Player Region')
+      .setRequired(true)
+      .addChoices(
+        { name: 'AS', value: 'AS' },
+        { name: 'NA', value: 'NA' },
+        { name: 'EU', value: 'EU' },
+        { name: 'OCE', value: 'OCE' },
+        { name: 'SA', value: 'SA' }
+      )
+  )
+  .addStringOption(option =>
+    option
+      .setName('previousrank')
+      .setDescription('Previous Rank')
+      .setRequired(true)
+  )
+  .addStringOption(option => {
+    option
+      .setName('tier')
+      .setDescription('Rank Earned')
+      .setRequired(true);
+
+    for (const rank of TIERS) {
+      if (rank === 'Unranked') continue;
+
+      option.addChoices({
+        name: rank,
+        value: rank,
+      });
+    }
+
+    return option;
+  });
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('results')
-    .setDescription('Post a test result.')
-
-    .addStringOption(option =>
-      option
-        .setName('username')
-        .setDescription('Minecraft username')
-        .setRequired(true)
-    )
-
-    .addStringOption(option =>
-      option
-        .setName('tier')
-        .setDescription('Rank earned')
-        .setRequired(true)
-    )
-
-    .addUserOption(option =>
-      option
-        .setName('tester')
-        .setDescription('Tester')
-        .setRequired(true)
-    )
-
-    .addStringOption(option =>
-      option
-        .setName('previousrank')
-        .setDescription('Previous rank')
-        .setRequired(true)
-    )
-
-    .addStringOption(option =>
-      option
-        .setName('region')
-        .setDescription('Region')
-        .setRequired(true)
-        .addChoices(
-          { name: 'AS', value: 'AS' },
-          { name: 'NA', value: 'NA' },
-          { name: 'EU', value: 'EU' },
-          { name: 'OCE', value: 'OCE' },
-          { name: 'SA', value: 'SA' }
-        )
-    )
-
-    .addStringOption(option =>
-      option
-        .setName('gamemode')
-        .setDescription('Gamemode tested')
-        .setRequired(true)
-        .addChoices(
-          { name: 'Sword', value: 'Sword' },
-          { name: 'Vanilla', value: 'Vanilla' },
-          { name: 'Diapot', value: 'Diapot' },
-          { name: 'NethPot', value: 'NethPot' },
-          { name: 'SMP', value: 'SMP' },
-          { name: 'DiaSMP', value: 'DiaSMP' },
-          { name: 'Cart', value: 'Cart' },
-          { name: 'Axe', value: 'Axe' },
-          { name: 'UHC', value: 'UHC' },
-          { name: 'Mace', value: 'Mace' }
-        )
-    ),
+  data: command,
 
   async execute(interaction) {
     if (!isStaff(interaction.member)) {
@@ -79,19 +75,18 @@ module.exports = {
     }
 
     const username = interaction.options.getString('username');
-    const tier = interaction.options.getString('tier');
-    const tester = interaction.options.getUser('tester');
-    const previousRank = interaction.options.getString('previousrank');
     const region = interaction.options.getString('region');
-    const gamemode = interaction.options.getString('gamemode');
+    const previousRank = interaction.options.getString('previousrank');
+    const tier = interaction.options.getString('tier');
+
+    const tester = interaction.user;
 
     const embed = buildResultsEmbed({
       username,
-      tier,
       tester: `<@${tester.id}>`,
-      previousRank,
       region,
-      gamemode,
+      previousRank,
+      tier,
     });
 
     try {
@@ -99,7 +94,7 @@ module.exports = {
 
       if (!channelId) {
         return interaction.reply({
-          content: '❌ Results channel has not been configured.',
+          content: '❌ Results channel has not been configured. Use `/setresultschannel` first.',
           ephemeral: true,
         });
       }
@@ -108,7 +103,7 @@ module.exports = {
 
       if (!channel || !channel.isTextBased()) {
         return interaction.reply({
-          content: '❌ Invalid results channel. Run `/setresultschannel` again.',
+          content: '❌ The configured results channel is invalid.',
           ephemeral: true,
         });
       }
@@ -119,14 +114,15 @@ module.exports = {
       });
 
       await interaction.reply({
-        content: '✅ Results posted successfully.',
+        content: '✅ Result posted successfully.',
         ephemeral: true,
       });
-    } catch (err) {
-      logger.error(err);
+
+    } catch (error) {
+      console.error(error);
 
       await interaction.reply({
-        content: '❌ Failed to post results.',
+        content: '❌ Failed to send the result.',
         ephemeral: true,
       });
     }
