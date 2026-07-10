@@ -5,7 +5,7 @@
 // ============================================================
 
 const { SlashCommandBuilder } = require('discord.js');
-const config = require('../config/config');
+const runtimeConfig = require('../utils/runtimeConfig');
 const { buildResultsEmbed } = require('../embeds/resultsEmbed');
 const { isStaff } = require('../utils/permissions');
 const { logger } = require('../utils/logger');
@@ -53,13 +53,20 @@ module.exports = {
     });
 
     try {
-      const resultsChannel = await interaction.guild.channels
-        .fetch(config.resultsChannelId)
-        .catch(() => null);
+      const resultsChannelId = runtimeConfig.getResultsChannelId();
+
+      if (!resultsChannelId) {
+        return interaction.reply({
+          content: '❌ No results channel is set. Ask staff to run `/setresultchannel` first.',
+          ephemeral: true,
+        });
+      }
+
+      const resultsChannel = await interaction.guild.channels.fetch(resultsChannelId).catch(() => null);
 
       if (!resultsChannel) {
         return interaction.reply({
-          content: '❌ The results channel is not configured correctly.',
+          content: '❌ The configured results channel could not be found. Run `/setresultchannel` again.',
           ephemeral: true,
         });
       }
