@@ -1,5 +1,5 @@
 // ============================================================
-// CDTIERS Bot - Entry Point
+// CDTIERS Bot - Entry thingy index.js shi idk
 // ============================================================
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
