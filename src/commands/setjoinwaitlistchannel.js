@@ -1,32 +1,32 @@
-const {
-    SlashCommandBuilder,
-    PermissionFlagsBits,
-    ChannelType,
-} = require('discord.js');
+// ============================================================
+// CDTIERS Bot - Join Waitlist Panel Embed
+// The static entry panel posted by /setjoinwaitlistchannel.
+// Players click "Enter Waitlist" to join the queue - this reuses
+// the same join_queue button handler as the live queue embed.
+// ============================================================
 
-const runtimeConfig = require('../utils/runtimeConfig');
+const { EmbedBuilder } = require('discord.js');
+const config = require('../config/config');
 
-module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('setjoinwaitlistchannel')
-        .setDescription('Sets the channel that will contain the Join Queue panel.')
-        .addChannelOption(option =>
-            option
-                .setName('channel')
-                .setDescription('Panel channel')
-                .addChannelTypes(ChannelType.GuildText)
-                .setRequired(true)
-        )
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+function buildJoinWaitlistPanelEmbed() {
+  return new EmbedBuilder()
+    .setColor(config.colors.primary)
+    .setTitle('📝 Evaluation Testing Waitlist')
+    .setDescription(
+      [
+        'Click **Enter Waitlist** below to join the CDTIERS testing queue.',
+        '',
+        'Once you join, you will automatically get access to the private queue channel,',
+        'where you will be pinged when a tester is ready for you.',
+        '',
+        '• Make sure the account you want tested is the one you are logged in as on Discord.',
+        '• Be ready to join a call/report to the tester promptly once it is your turn.',
+        '',
+        '❗ Leaving mid-test or providing false information may result in a denied test.',
+      ].join('\n')
+    )
+    .setFooter({ text: config.brand })
+    .setTimestamp();
+}
 
-    async execute(interaction) {
-        const channel = interaction.options.getChannel('channel');
-
-        runtimeConfig.setJoinWaitlistChannelId(channel.id);
-
-        await interaction.reply({
-            content: `✅ Join waitlist channel has been set to ${channel}.`,
-            ephemeral: true,
-        });
-    },
-};
+module.exports = { buildJoinWaitlistPanelEmbed };
